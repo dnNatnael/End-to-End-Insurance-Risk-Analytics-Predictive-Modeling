@@ -1,8 +1,11 @@
 .venv/
 __pycache__/
 *.pyc
-data/
+data/*
+!data/*.dvc
 .ipynb_checkpoints/
 .env
 venv/
-.dvc/
+.dvc/cache/
+.dvc/tmp/
+dvc-storage/
