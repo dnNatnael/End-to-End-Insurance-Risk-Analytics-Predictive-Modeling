@@ -8,3 +8,4 @@ data/*
 venv/
 .dvc/cache/
 .dvc/tmp/
+dvc-storage/
