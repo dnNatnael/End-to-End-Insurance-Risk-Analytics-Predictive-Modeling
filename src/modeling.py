@@ -203,8 +203,18 @@ class FeatureEngineer:
         for dummy_df in encoded_dfs:
             X = pd.concat([X, dummy_df], axis=1)
         
-        # Handle missing values
-        X = X.fillna(X.median() if len(numeric_cols) > 0 else 0)
+        # Handle missing values - use median for numeric columns, 0 for others
+        for col in X.columns:
+            if X[col].isnull().any():
+                if X[col].dtype in [np.float64, np.float32, np.int64, np.int32]:
+                    # For numeric columns, use median
+                    fill_value = X[col].median()
+                    if pd.isna(fill_value):
+                        fill_value = 0  # If median is NaN (all values NaN), use 0
+                    X[col] = X[col].fillna(fill_value)
+                else:
+                    # For non-numeric columns (shouldn't happen after encoding, but just in case)
+                    X[col] = X[col].fillna(0)
         
         # Scale features
         if not self.is_fitted:
@@ -251,6 +261,33 @@ class ModelTrainer:
         Returns:
             Dictionary of model results
         """
+        # Ensure data is clean - handle any remaining NaN values
+        X_train = X_train.copy()
+        X_test = X_test.copy()
+        
+        # Fill NaN values with median for numeric columns, 0 for others
+        for col in X_train.columns:
+            if X_train[col].isnull().any() or X_test[col].isnull().any():
+                if X_train[col].dtype in [np.float64, np.float32, np.int64, np.int32]:
+                    fill_value = X_train[col].median()
+                    if pd.isna(fill_value):
+                        fill_value = 0
+                    X_train[col] = X_train[col].fillna(fill_value)
+                    X_test[col] = X_test[col].fillna(fill_value)
+                else:
+                    X_train[col] = X_train[col].fillna(0)
+                    X_test[col] = X_test[col].fillna(0)
+        
+        # Check for infinite values and replace them
+        X_train = X_train.replace([np.inf, -np.inf], np.nan)
+        X_test = X_test.replace([np.inf, -np.inf], np.nan)
+        X_train = X_train.fillna(0)
+        X_test = X_test.fillna(0)
+        
+        # Log if any NaN values were found and fixed
+        if X_train.isnull().any().any() or X_test.isnull().any().any():
+            logger.warning("NaN values detected and filled in training/test data")
+        
         results = {}
         
         # Linear Regression
@@ -338,6 +375,33 @@ class ModelTrainer:
         Returns:
             Dictionary of model results
         """
+        # Ensure data is clean - handle any remaining NaN values
+        X_train = X_train.copy()
+        X_test = X_test.copy()
+        
+        # Fill NaN values with median for numeric columns, 0 for others
+        for col in X_train.columns:
+            if X_train[col].isnull().any() or X_test[col].isnull().any():
+                if X_train[col].dtype in [np.float64, np.float32, np.int64, np.int32]:
+                    fill_value = X_train[col].median()
+                    if pd.isna(fill_value):
+                        fill_value = 0
+                    X_train[col] = X_train[col].fillna(fill_value)
+                    X_test[col] = X_test[col].fillna(fill_value)
+                else:
+                    X_train[col] = X_train[col].fillna(0)
+                    X_test[col] = X_test[col].fillna(0)
+        
+        # Check for infinite values and replace them
+        X_train = X_train.replace([np.inf, -np.inf], np.nan)
+        X_test = X_test.replace([np.inf, -np.inf], np.nan)
+        X_train = X_train.fillna(0)
+        X_test = X_test.fillna(0)
+        
+        # Log if any NaN values were found and fixed
+        if X_train.isnull().any().any() or X_test.isnull().any().any():
+            logger.warning("NaN values detected and filled in training/test data")
+        
         results = {}
         
         # Logistic Regression
